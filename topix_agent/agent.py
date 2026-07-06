@@ -140,7 +140,7 @@ Return ONLY the JSON array (e.g. ["鉱業", "エネルギー資源"]). Do NOT wr
                                 "turnover_ratio": round(turnover_ratio, 4),
                                 "industry_33": ind33,
                                 "industry_17": ind17,
-                                "market": "グロース" if code in jpx_growth else "スタンダード"
+                                "market": "Growth" if code in jpx_growth else "Standard"
                             })
                     # Sort sector stocks by market cap descending and limit to top 30
                     sector_stocks = sorted(sector_stocks, key=lambda x: x["market_cap"], reverse=True)[:30]
@@ -163,16 +163,17 @@ TOPIX New Criteria (from Oct 2026):
 - New Inclusion Criteria:
   1. Annual turnover ratio >= 0.2
   2. Float market cap in top 96% cumulative (typically around 40 billion JPY or more).
+
 CRITICAL TERMINOLOGY RULES:
 1. The `market_cap` field in the provided data is the calculated **流通時価総額 (Float-adjusted Market Cap)**, NOT the full market capitalization (全体時価総額).
-2. When mentioning these values, you MUST strictly refer to them as **「流通時価総額」** (Float-adjusted Market Cap) in Japanese, and clarify that they are float-adjusted (e.g. "流通時価総額 約414億円 (全体時価総額は1,035億円)" or similar). Never call them just "時価総額".
+2. When mentioning these values, you MUST strictly refer to them as **「Float-adjusted Market Cap」** (or Flow Market Cap) in English, and clarify that they are float-adjusted (e.g. "Float-adjusted Market Cap of approx 41.4 Billion JPY (Full Market Cap is 103.5 Billion JPY)" or similar).
 
-Answer the question clearly in Japanese.
-- If the user asks about a specific sector or topic (e.g. 資源, 魚, 水産, エンタメ), find and list the companies in that sector from the "All Stocks in these Industries" list above. State their current price, annual volume, **流通時価総額**, and turnover ratio, and explain whether they meet or are close to meeting the TOPIX criteria.
+Answer the question clearly in English.
+- If the user asks about a specific sector or topic (e.g. resources, entertainment, etc.), find and list the companies in that sector from the "All Stocks in these Industries" list above. State their current price, annual volume, **Float-adjusted Market Cap**, and turnover ratio, and explain whether they meet or are close to meeting the TOPIX criteria.
 - If none of the companies in that sector meet the criteria, state that clearly and list the largest ones as reference.
 - Explain that you scanned all 2,161 Growth & Standard stocks dynamically to find these.
 - If the user asks about why there are no borderline candidates in Growth, explain that there is a natural gap in the Growth market between 34B JPY and 41B JPY (e.g. Cover 5253 is at 41.4B JPY and GENDA 9166 is at 42.4B JPY, while the next largest ones are below 34B JPY), meaning all Growth stocks that meet the 35B JPY baseline also happen to meet the strict 40B JPY criteria.
-- Always include a standard investment disclaimer in Japanese at the end of your response."""
+- Always include a standard investment disclaimer in English at the end of your response."""
                 
                 response_stream = self.client.models.generate_content_stream(
                     model=self.model,
@@ -193,23 +194,23 @@ Answer the question clearly in Japanese.
         # ----------------------------------------------------
         markets_to_scan = []
         if "RUN_GROWTH" in classification:
-            markets_to_scan = ["グロース"]
+            markets_to_scan = ["Growth"]
         elif "RUN_STANDARD" in classification:
-            markets_to_scan = ["スタンダード"]
+            markets_to_scan = ["Standard"]
         else:
-            markets_to_scan = ["グロース", "スタンダード"]
+            markets_to_scan = ["Growth", "Standard"]
             
-        markets_str = "・".join(markets_to_scan)
+        markets_str = " & ".join(markets_to_scan)
             
         # 1. Data Collection
-        yield "data: {\"type\": \"status\", \"content\": \"リクエストを解析中...\"}\n\n"
+        yield "data: {\"type\": \"status\", \"content\": \"Parsing Request...\"}\n\n"
         
         # Check if cache is empty. If it is, wait for the background initialization thread to write it.
         from topix_agent.tools.stock_data import load_local_cache
         cache = load_local_cache()
         if not cache:
-            yield "data: {\"type\": \"status\", \"content\": \"データベースを初期化中です（約60秒〜90秒）...\"}\n\n"
-            msg = "**[System]** データベースファイルが見つかりません。初回起動時の自動構築処理を開始します（約60秒〜90秒）。完了するまでこのままお待ちください...\n\n"
+            yield "data: {\"type\": \"status\", \"content\": \"Initializing Database Cache (approx. 60-90s)...\"}\n\n"
+            msg = "**[System]** Database cache file not found. Rebuilding database (approx. 60-90s)... Please wait.\n\n"
             yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
             
             import topix_agent.tools.stock_data as sd
@@ -221,16 +222,16 @@ Answer the question clearly in Japanese.
                 cache = load_local_cache()
                 if cache and len(cache) >= 2000:
                     break
-                yield "data: {\"type\": \"status\", \"content\": \"データベース再構築中...\"}\n\n"
-            msg = "**[System]** データベースの構築が完了しました！スクリーニング分析を開始します。\n\n---\n\n"
+                yield "data: {\"type\": \"status\", \"content\": \"Rebuilding Database Cache...\"}\n\n"
+            msg = "**[System]** Database cache built successfully! Commencing screening analysis.\n\n---\n\n"
             yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
 
-        msg = f"**[System]** リクエストを受信しました。対象市場を「{markets_str}」に設定して分析を開始します。\n\n---\n\n"
+        msg = f"**[System]** Request received. Setting target markets to \"{markets_str}\" and starting screening...\n\n---\n\n"
         yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
         await asyncio.sleep(0.05)
         
-        yield "data: {\"type\": \"status\", \"content\": \"JPXから銘柄リストを取得中...\"}\n\n"
-        msg = f"**[Data Agent]** JPXデータベースへ接続し、{markets_str}市場の全銘柄を照会します...\n\n"
+        yield "data: {\"type\": \"status\", \"content\": \"Fetching Ticker List from JPX...\"}\n\n"
+        msg = f"**[Data Agent]** Connecting to JPX database to query all tickers in {markets_str} markets...\n\n"
         yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
         await asyncio.sleep(0.05)
         
@@ -238,21 +239,21 @@ Answer the question clearly in Japanese.
         stock_codes_dict = {}
         jpx_growth = {}
         jpx_standard = {}
-        if "グロース" in markets_to_scan:
+        if "Growth" in markets_to_scan:
             jpx_growth = fetch_jpx_stock_list("グロース")
             stock_codes_dict.update(jpx_growth)
-        if "スタンダード" in markets_to_scan:
+        if "Standard" in markets_to_scan:
             jpx_standard = fetch_jpx_stock_list("スタンダード")
             stock_codes_dict.update(jpx_standard)
             
         codes = list(stock_codes_dict.keys())
         
-        msg = f"**[Data Agent]** 照会完了。{markets_str}市場の全 {len(codes)} 銘柄をターゲットとして抽出しました。\n\n"
+        msg = f"**[Data Agent]** Query complete. Extracted a total of {len(codes)} target tickers for {markets_str}.\n\n"
         yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
         await asyncio.sleep(0.05)
         
-        yield f"data: {{\"type\": \"status\", \"content\": \"最新市場データをロード中 (対象: {len(codes)}銘柄)...\"}}\n\n"
-        msg = f"**[Data Agent]** 高速キャッシュデータベースおよびYahoo Finance APIにアクセスし、対象 {len(codes)} 銘柄の最新株価・時価総額・年間出来高をロードしています...\n\n"
+        yield f"data: {{\"type\": \"status\", \"content\": \"Loading Market Data (Target: {len(codes)} tickers)...\"}}\n\n"
+        msg = f"**[Data Agent]** Querying high-performance cache and Yahoo Finance APIs to load prices, market caps, and volumes...\n\n"
         yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
         await asyncio.sleep(0.05)
         
@@ -270,7 +271,7 @@ Answer the question clearly in Japanese.
                 "market_cap": m_info.get("market_cap", 0),
                 "annual_volume": v_info.get("annual_volume", 0),
                 "annual_turnover_value": v_info.get("annual_turnover_value", 0),
-                "market": "グロース" if code in jpx_growth else "スタンダード"
+                "market": "Growth" if code in jpx_growth else "Standard"
             }
             
         # Filter and categorize candidates
@@ -299,17 +300,17 @@ Answer the question clearly in Japanese.
         total_borderline_count = len(borderline_candidates)
         total_matched_count = total_eligible_count + total_borderline_count
 
-        msg = f"**[Data Agent]** 全 {len(codes)} 銘柄のデータ取得およびスクリーニングが完了しました。\n"
-        msg += f"適合候補として **{total_eligible_count} 銘柄**、ボーダーライン候補として **{total_borderline_count} 銘柄** を検出しました。詳細分析のためにデータを分析エージェントへ引き継ぎます。\n\n---\n\n"
+        msg = f"**[Data Agent]** Data collection and screening complete for all {len(codes)} stocks.\n"
+        msg += f"Detected **{total_eligible_count} eligible candidates** and **{total_borderline_count} borderline candidates**. Handing data over to Analysis Agent...\n\n---\n\n"
         yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
         await asyncio.sleep(0.05)
         
-        yield "data: {\"type\": \"status\", \"content\": \"流通時価総額を計算中...\"}\n\n"
-        yield "data: {\"type\": \"status\", \"content\": \"年間売買代金回転率を計算中...\"}\n\n"
+        yield "data: {\"type\": \"status\", \"content\": \"Calculating Float-adjusted Market Cap...\"}\n\n"
+        yield "data: {\"type\": \"status\", \"content\": \"Calculating Annual Turnover Ratio...\"}\n\n"
         
         # 2. Analysis
-        yield "data: {\"type\": \"status\", \"content\": \"採用候補をスクリーニング中...\"}\n\n"
-        msg = f"**[Analysis Agent]** 適合候補 {total_eligible_count} 銘柄およびボーダーライン候補 {total_borderline_count} 銘柄の適合性分析を開始します。\n\n"
+        yield "data: {\"type\": \"status\", \"content\": \"Screening Restructuring Candidates...\"}\n\n"
+        msg = f"**[Analysis Agent]** Starting qualitative analysis on {total_eligible_count} eligible and {total_borderline_count} borderline candidates...\n\n"
         yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
         await asyncio.sleep(0.05)
         
@@ -324,7 +325,7 @@ Strictly Eligible Candidates:
 Borderline Candidates:
 {json.dumps(dict(sorted_borderline), ensure_ascii=False)}
 
-Output a concise summary in Japanese of your analysis (do NOT output any raw JSON list or full stock tables):
+Output a concise summary in English of your analysis (do NOT output any raw JSON list or full stock tables):
 1. Number of strictly eligible candidates vs borderline candidates.
 2. Highlight a few key prominent candidates in both categories (e.g., Trial Holdings 141A, PowerX 485A, Cover 5253, Genda 9166, Nissan Shatai 7222, Kitagawa Seiki 6327, etc.) and explain why they fit or are borderline.
 3. Summary of sector distribution.
@@ -341,19 +342,19 @@ Keep your response under 300 words."""
                 yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(chunk.text)}}}\n\n"
                 await asyncio.sleep(0.01)
                 
-        msg = f"\n\n**[Analysis Agent]** スクリーニングが完了しました。結果をレポートエージェントに引き継ぎます。\n\n---\n\n"
+        msg = f"\n\n**[Analysis Agent]** Qualitative analysis complete. Handing results over to Report Agent...\n\n---\n\n"
         yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
         await asyncio.sleep(0.05)
         
         # 3. Report
-        yield "data: {\"type\": \"status\", \"content\": \"レポートを生成中...\"}\n\n"
-        yield "data: {\"type\": \"status\", \"content\": \"レポートを生成中...\"}\n\n"
-        msg = f"**[Report Agent]** 分析データを受領しました。最終的な投資レポートの清書とフォーマット調整を行います...\n\n"
+        yield "data: {\"type\": \"status\", \"content\": \"Generating Final Markdown Report...\"}\n\n"
+        yield "data: {\"type\": \"status\", \"content\": \"Generating Final Markdown Report...\"}\n\n"
+        msg = f"**[Report Agent]** Analysis received. Formatting final investment report and structured tables...\n\n"
         yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
         await asyncio.sleep(0.05)
         
         report_prompt = f"""You are the report_agent.
-Format the following analysis and candidates into a stunning, professional Japanese Markdown report.
+Format the following analysis and candidates into a stunning, professional English Markdown report.
 Do not output raw JSON. Use headings, bullet points, and bold text to highlight recommended stocks.
 
 Eligible Candidates Data:
@@ -367,23 +368,23 @@ Analysis Summary:
 
 CRITICAL:
 1. State clearly under the main header:
-   - Total number of **適合銘柄** (Strictly Eligible: 流通時価総額 >= 400億円 かつ 年間売買回転率 >= 0.20) is {total_eligible_count}.
-   - Total number of **ボーダーライン銘柄** (Borderline: 流通時価総額 350億〜400億円、または 年間売買回転率 0.15〜0.20) is {total_borderline_count}.
+   - Total number of **Eligible Candidates** (Strictly Eligible: Float MC >= 40B JPY and Annual Turnover >= 0.20) is {total_eligible_count}.
+   - Total number of **Borderline Candidates** (Borderline: Float MC 35B-40B JPY, or Annual Turnover 0.15-0.20) is {total_borderline_count}.
 2. You MUST generate TWO separate tables:
-   - **Table 1: TOPIX新規採用要件 適合銘柄 (流通時価総額 400億円以上 かつ 年間売買回転率 0.2以上)**
+   - **Table 1: TOPIX Restructuring Eligible Candidates (Float Market Cap >= 40B JPY and Annual Turnover >= 0.20)**
      This table must contain ALL candidates from Eligible Candidates Data. Do not omit any!
-   - **Table 2: ボーダーライン銘柄 (流通時価総額 350億〜400億円、または 回転率 0.15〜0.20)**
-     This table must contain ALL candidates from Borderline Candidates Data. Do not omit any! If there are no borderline candidates, write "なし".
+   - **Table 2: Borderline Candidates (Float Market Cap 35B-40B JPY, or Annual Turnover 0.15-0.20)**
+     This table must contain ALL candidates from Borderline Candidates Data. Do not omit any! If there are no borderline candidates, write "None".
 3. Both tables MUST contain columns named EXACTLY:
-   - 証券コード (Ticker Code)
-   - 銘柄名 (Company Name)
-   - 市場 (Market - "グロース" or "スタンダード")
-   - 現在株価 (Current Price)
-   - 年間出来高 (Annual Volume in shares)
-   - 流通時価総額 (Float-adjusted Market Cap)
-   - 年間売買回転率 (Annual Turnover Ratio)
+   - Ticker
+   - Company Name
+   - Market ("Growth" or "Standard")
+   - Current Price
+   - Annual Volume
+   - Float Market Cap
+   - Annual Turnover Ratio
 4. Below the tables, provide a professional summary of the findings based on the Analysis Summary.
-5. Also mention: "※本分析は、対象市場（グロース全596銘柄 / スタンダード全1565銘柄）のすべての銘柄を網羅的にスクリーニングした結果です（Yahoo Finance of APIレート制限を回避するため、高速キャッシュデータベースを使用しています）。"
+5. Also mention: "Note: This analysis screens all listed tickers in the target markets (596 Growth / 1,565 Standard). To bypass Yahoo Finance rate limits, a high-performance cached database is used."
 
 Analysis:
 {analysis_result}"""

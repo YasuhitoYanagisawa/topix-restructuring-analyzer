@@ -65,13 +65,13 @@ async def chat_endpoint(request: ChatRequest):
     async def event_stream() -> AsyncGenerator[str, None]:
         try:
             # Yield initial status
-            yield f"data: {json.dumps({'type': 'status', 'content': 'エージェントが思考中...'})}\n\n"
+            yield f"data: {json.dumps({'type': 'status', 'content': 'Agent is thinking...'})}\n\n"
             
             # Use custom PipelineAgent directly
             async for chunk in topix_agent.generate_response(request.message, request.session_id):
                 yield chunk
             
-            yield f"data: {json.dumps({'type': 'status', 'content': '完了'})}\n\n"
+            yield f"data: {json.dumps({'type': 'status', 'content': 'Completed'})}\n\n"
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
             
         except Exception as e:

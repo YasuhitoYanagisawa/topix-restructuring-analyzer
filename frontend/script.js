@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollToBottom();
 
         // Update UI state
-        setAgentState('active', 'エージェントが思考中...');
+        setAgentState('active', 'Agent is thinking...');
 
         try {
             // Setup SSE
@@ -83,10 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 updateSteps(data.content);
                             } else if (data.type === 'error') {
                                 console.error('Server error:', data.content);
-                                setAgentState('waiting', 'エラーが発生しました');
+                                setAgentState('waiting', 'An error occurred');
                             } else if (data.type === 'done') {
-                                setAgentState('waiting', '✅ 分析完了');
-                                updateSteps('完了', true);
+                                setAgentState('waiting', '✅ Screening Completed');
+                                updateSteps('Completed', true);
                             }
                         } catch (e) {
                             console.error('Error parsing SSE data:', e, dataStr);
@@ -96,8 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Fetch error:', error);
-            agentMessageDiv.querySelector('.message-content').innerHTML = '<span style="color:var(--danger)">エラーが発生しました。サーバーが起動しているか確認してください。</span>';
-            setAgentState('waiting', 'エラー');
+            agentMessageDiv.querySelector('.message-content').innerHTML = '<span style="color:var(--danger)">An error occurred. Please verify that the server is running.</span>';
+            setAgentState('waiting', 'Error');
         } finally {
             userInput.disabled = false;
             sendBtn.disabled = false;
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function createAgentMessageContainer() {
         const div = document.createElement('div');
         div.className = 'message agent-message';
-        div.innerHTML = '<div class="message-content"><div class="typing-indicator">分析しています...</div></div>';
+        div.innerHTML = '<div class="message-content"><div class="typing-indicator">Screening and analyzing...</div></div>';
         return div;
     }
 
@@ -137,13 +137,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const steps = [
-        "リクエストの解析",
-        "JPXから銘柄リスト取得",
-        "yfinanceから市場データ取得",
-        "流通時価総額の計算",
-        "年間売買代金回転率の計算",
-        "採用候補のスクリーニング",
-        "レポート生成"
+        "Parsing Request",
+        "Fetching Ticker List from JPX",
+        "Loading Market Data via yfinance",
+        "Calculating Float-adjusted Market Cap",
+        "Calculating Annual Turnover Ratio",
+        "Screening Restructuring Candidates",
+        "Generating Final Markdown Report"
     ];
     let currentStepIndex = 0;
 
@@ -196,13 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 2. Handle temporary database rebuilding step
-        if (statusText.includes("データベース") || statusText.includes("再構築")) {
+        if (statusText.includes("database") || statusText.includes("Rebuilding") || statusText.includes("Initializing")) {
             let dbStep = document.getElementById('step-db-rebuild');
             if (!dbStep) {
                 dbStep = document.createElement('li');
                 dbStep.className = 'step active';
                 dbStep.id = 'step-db-rebuild';
-                dbStep.innerHTML = `<span class="step-icon">▶</span> <span class="step-text" style="color: var(--accent-light); font-weight: 500;">データベース初期構築中 (約60秒〜90秒)</span>`;
+                dbStep.innerHTML = `<span class="step-icon">▶</span> <span class="step-text" style="color: var(--accent-light); font-weight: 500;">Building Database Cache (approx. 60-90s)</span>`;
                 // Insert at the very top of stepsContainer
                 stepsContainer.insertBefore(dbStep, stepsContainer.firstChild);
             } else {
@@ -214,26 +214,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // If we transition to standard steps, make sure to check off the database rebuilding step if it was active
         const dbStep = document.getElementById('step-db-rebuild');
-        if (dbStep && dbStep.className.includes('active') && !statusText.includes("データベース")) {
+        if (dbStep && dbStep.className.includes('active') && !statusText.includes("database") && !statusText.includes("Rebuilding") && !statusText.includes("Initializing")) {
             dbStep.className = 'step completed';
             dbStep.querySelector('.step-icon').textContent = '✓';
         }
 
         // 3. Map statusText to specific steps
         let activeIndex = -1;
-        if (statusText.includes("解析中")) {
+        if (statusText.includes("Parsing") || statusText.includes("Request")) {
             activeIndex = 0;
-        } else if (statusText.includes("JPX") || statusText.includes("銘柄リスト")) {
+        } else if (statusText.includes("JPX") || statusText.includes("ticker") || statusText.includes("Ticker")) {
             activeIndex = 1;
-        } else if (statusText.includes("市場データ") || statusText.includes("ロード中")) {
+        } else if (statusText.includes("market data") || statusText.includes("Loading") || statusText.includes("loading")) {
             activeIndex = 2;
-        } else if (statusText.includes("流通時価総額")) {
+        } else if (statusText.includes("Float-adjusted") || statusText.includes("Float") || statusText.includes("float")) {
             activeIndex = 3;
-        } else if (statusText.includes("年間売買代金") || statusText.includes("回転率")) {
+        } else if (statusText.includes("turnover") || statusText.includes("Turnover")) {
             activeIndex = 4;
-        } else if (statusText.includes("スクリーニング") || statusText.includes("候補")) {
+        } else if (statusText.includes("screening") || statusText.includes("Screening")) {
             activeIndex = 5;
-        } else if (statusText.includes("レポート") || statusText.includes("生成中")) {
+        } else if (statusText.includes("report") || statusText.includes("Report") || statusText.includes("Generating")) {
             activeIndex = 6;
         }
 
