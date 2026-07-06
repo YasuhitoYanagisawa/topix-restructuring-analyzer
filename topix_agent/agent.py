@@ -38,14 +38,14 @@ Respond with ONLY the category name (RUN_GROWTH, RUN_STANDARD, RUN_ALL, or CHAT_
         
         if "CHAT_QUESTION" in classification:
             # Answer user's question using current cache database candidates
-            yield "data: {\"type\": \"status\", \"content\": \"回答を準備中...\"}\n\n"
+            yield "data: {\"type\": \"status\", \"content\": \"Preparing response...\"}\n\n"
             
             try:
                 from topix_agent.tools.stock_data import load_local_cache
                 cache = load_local_cache()
                 if not cache:
-                    yield "data: {\"type\": \"status\", \"content\": \"データベースを初期化中です（約60秒〜90秒）...\"}\n\n"
-                    msg = "**[System]** データベースファイルが見つかりません。初回起動時の自動構築処理を開始します（約60秒〜90秒）。完了するまでこのままお待ちください...\n\n"
+                    yield "data: {\"type\": \"status\", \"content\": \"Initializing Database Cache (approx. 60-90s)...\"}\n\n"
+                    msg = "**[System]** Database cache file not found. Rebuilding database (approx. 60-90s)... Please wait.\n\n"
                     yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
                     
                     import topix_agent.tools.stock_data as sd
@@ -57,8 +57,8 @@ Respond with ONLY the category name (RUN_GROWTH, RUN_STANDARD, RUN_ALL, or CHAT_
                         cache = load_local_cache()
                         if cache and len(cache) >= 2000:
                             break
-                        yield "data: {\"type\": \"status\", \"content\": \"データベース再構築中...\"}\n\n"
-                    msg = "**[System]** データベースの構築が完了しました！回答を準備します。\n\n---\n\n"
+                        yield "data: {\"type\": \"status\", \"content\": \"Rebuilding Database Cache...\"}\n\n"
+                    msg = "**[System]** Database cache built successfully! Preparing response.\n\n---\n\n"
                     yield f"data: {{\"type\": \"message\", \"content\": {json.dumps(msg)}}}\n\n"
 
                 # Retrieve all standard and growth stocks from cache
