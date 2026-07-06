@@ -25,14 +25,15 @@ except ImportError:
     pass
 # ---------------------------------------------------------
 
-def fetch_jpx_stock_list(market: str = "グロース") -> dict[str, str]:
-    url = "https://www.jpx.co.jp/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_j.xls"
+def fetch_jpx_stock_list(market: str = "Growth") -> dict[str, str]:
+    url = "https://www.jpx.co.jp/english/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_e.xls"
     try:
         df = pd.read_excel(url)
+        m_query = "Growth" if market in ["グロース", "Growth"] else "Standard"
         if market:
-            df = df[df["市場・商品区分"].str.contains(market, na=False)]
-        codes = df["コード"].astype(str).tolist()
-        names = df["銘柄名"].astype(str).tolist()
+            df = df[df["Section/Products"].str.contains(m_query, na=False)]
+        codes = df["Local Code"].astype(str).tolist()
+        names = df["Name (English)"].astype(str).tolist()
         return dict(zip(codes, names))
     except Exception as e:
         logger.error(f"Error fetching JPX data: {e}")
@@ -302,29 +303,29 @@ def update_cache_autonomously():
         # Fetch official FFW float ratios from JPX revisions page
         float_ratios = fetch_jpx_float_ratios()
         
-        url = "https://www.jpx.co.jp/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_j.xls"
+        url = "https://www.jpx.co.jp/english/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_e.xls"
         try:
             df = pd.read_excel(url)
         except Exception as e:
-            logger.error(f"Failed to fetch JPX Excel list during update: {e}")
+            logger.error(f"Failed to fetch JPX English Excel list during update: {e}")
             return
             
-        df_growth = df[df["市場・商品区分"].str.contains("グロース", na=False)]
-        df_standard = df[df["市場・商品区分"].str.contains("スタンダード", na=False)]
+        df_growth = df[df["Section/Products"].str.contains("Growth", na=False)]
+        df_standard = df[df["Section/Products"].str.contains("Standard", na=False)]
         
         cache = load_local_cache()
         
         # Process all growth and standard stocks
         all_stocks = []
-        for market_name, df_market in [("グロース", df_growth), ("スタンダード", df_standard)]:
+        for market_name, df_market in [("Growth", df_growth), ("Standard", df_standard)]:
             for _, row in df_market.iterrows():
                 all_stocks.append({
-                    "code": str(row["コード"]),
-                    "name": str(row["銘柄名"]),
+                    "code": str(row["Local Code"]),
+                    "name": str(row["Name (English)"]),
                     "market": market_name,
-                    "size_class": str(row["規模区分"]).strip(),
-                    "industry_33": str(row["33業種区分"]).strip(),
-                    "industry_17": str(row["17業種区分"]).strip()
+                    "size_class": str(row["Size (New Index Series)"]).strip(),
+                    "industry_33": str(row["33 Sector(name)"]).strip(),
+                    "industry_17": str(row["17 Sector(name)"]).strip()
                 })
                 
         logger.info(f"Total stocks to update: {len(all_stocks)}")
@@ -412,7 +413,7 @@ def update_cache_autonomously():
                         cached["float_ratio"] = float_ratios[code]
                     elif "float_ratio" not in cached:
                         # Fallback default float ratio based on market
-                        cached["float_ratio"] = 0.50 if stock["market"] == "グロース" else 0.70
+                        cached["float_ratio"] = 0.50 if stock["market"] in ["グロース", "Growth"] else 0.70
                         
                     cache[code] = cached
             except Exception as e:
