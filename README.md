@@ -31,15 +31,19 @@ The engine is built around a modular multi-agent system coordinated by a Pipelin
 graph TD
     User([User Screen Request]) --> PA[Pipeline Agent]
     PA --> DA[Data Agent]
-    DA --> |1. Get JPX Excel List & FFW Ratios| Web[JPX Website]
-    DA --> |2. Fetch Shares Outstanding in Parallel| YF[Yahoo Finance Ticker API]
-    DA --> |3. Batch Fetch Price & Volume | YF_Chart[Yahoo Finance Chart API]
-    DA --> |4. Cache Database| Cache[(Local JSON Cache)]
+    
+    subgraph Data Ingestion
+        DA --> Web["1. JPX Website (Excel & FFW Ratios)"]
+        DA --> YF["2. Yahoo Finance (Shares Outstanding)"]
+        DA --> YF_Chart["3. Yahoo Finance (Price & Volume)"]
+    end
+    
+    DA --> Cache[("4. Local Cache (topix_stock_cache.json)")]
     Cache --> |Calculated Float MC & Turnover| PA
-    PA --> AA[Analysis Agent]
-    AA --> |Evaluate 100% Compliant vs Borderline| PA
-    PA --> RA[Report Agent]
-    RA --> |Render Structured Tables| Report[Final Markdown Report]
+    
+    PA --> AA["5. Analysis Agent (LLM Evaluation)"]
+    PA --> RA["6. Report Agent (Markdown Generation)"]
+    RA --> Report["7. Final Investment Report"]
 ```
 
 * **Data Agent**: Operates deterministically via Python code. It downloads the JPX stock list, maps FFW ratios, fetches live prices/volumes in parallel, and caches the database locally.
