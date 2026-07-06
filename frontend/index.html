@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOPIX Restructuring Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="logo-container">
+                <div class="logo-icon">📊</div>
+                <div>
+                    <h1>TOPIX Restructuring Analyzer</h1>
+                    <p class="subtitle">2026年10月新基準 銘柄見直し先回り分析</p>
+                </div>
+            </div>
+            <div class="status-indicator">
+                <span class="pulse-dot"></span>
+                <span>System Online</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="chat-section glass-panel">
+                <div class="chat-history" id="chat-history">
+                    <div class="message system-message">
+                        <div class="message-content">
+                            TOPIX（東証株価指数）の2026年10月構成銘柄見直しに向けた、新規採用候補の先回り分析システムです。<br>
+                            「流通時価総額 400億円前後」をボーダーラインとし、スタンダード・グロース市場から有力候補をスクリーニングします。<br>
+                            下のボタンから分析を開始してください。
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <div class="quick-actions">
+                        <button class="action-btn" onclick="startAnalysis('TOPIX採用候補の銘柄を分析して、リストアップしてください。')">
+                            🔍 分析開始 (全市場)
+                        </button>
+                        <button class="action-btn" onclick="startAnalysis('スタンダード市場の銘柄に絞って、TOPIX採用候補を分析してください。')">
+                            🏢 スタンダード市場のみ
+                        </button>
+                        <button class="action-btn" onclick="startAnalysis('グロース市場の銘柄に絞って、TOPIX採用候補を分析してください。')">
+                            🚀 グロース市場のみ
+                        </button>
+                    </div>
+                    <form id="chat-form" class="input-form">
+                        <input type="text" id="user-input" placeholder="エージェントに質問する..." autocomplete="off">
+                        <button type="submit" id="send-btn" class="send-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="info-card glass-panel">
+                    <h3>📊 TOPIX 新規採用基準</h3>
+                    <ul class="criteria-list">
+                        <li>
+                            <span class="criteria-label">対象市場</span>
+                            <span class="criteria-value">スタンダード・グロース</span>
+                        </li>
+                        <li>
+                            <span class="criteria-label">流通時価総額</span>
+                            <span class="criteria-value highlight">約400億円以上</span>
+                        </li>
+                        <li>
+                            <span class="criteria-label">年間売買代金回転率</span>
+                            <span class="criteria-value highlight">0.2 以上</span>
+                        </li>
+                    </ul>
+                    <div class="criteria-note">
+                        ※浮動株時価総額の累積比率上位96%以内。実質的なボーダーラインが400億円前後となります。
+                    </div>
+                </div>
+
+                <div class="agent-status glass-panel">
+                    <h3>🤖 Agent Activity</h3>
+                    <div id="agent-status-text" class="status-text waiting">待機中...</div>
+                    <div class="progress-bar-container">
+                        <div id="agent-progress" class="progress-bar"></div>
+                    </div>
+                    <ul class="agent-steps" id="agent-steps">
+                        <!-- ステップがここに追加されます -->
+                    </ul>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="disclaimer">
+            ⚠️ <strong>投資に関する重要な注意事項:</strong> 本分析は情報提供のみを目的としており、特定の銘柄の購入・売却を推奨するものではありません。投資判断は、ご自身の責任において行ってください。株式投資にはリスクが伴い、元本の損失が生じる可能性があります。
+        </footer>
+    </div>
+    <script src="/static/script.js?v=4"></script>
+</body>
+</html>

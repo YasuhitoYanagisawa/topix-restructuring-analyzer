@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+venv/
+ENV/
+env/
+
+# Project caches & database files
+topix_agent/tools/topix_stock_cache.json
+
+# Local logs & test outputs
+*.log
+agent_history.txt
+test_out.txt
+test_out_eligible.json
+
+# OS files
+.DS_Store
+Thumbs.db
